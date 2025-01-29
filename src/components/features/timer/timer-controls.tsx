@@ -1,42 +1,40 @@
 "use client"
 
-import { Play, Pause, RotateCcw } from "lucide-react"
 import { useTimer } from "@/contexts/timer-context"
 import { Button } from "@/components/ui/button"
+import { Play, Pause, RotateCcw } from "lucide-react"
 
 export function TimerControls() {
-  const { isRunning, startTimer, pauseTimer, resetTimer, selectedTimer } =
-    useTimer()
+  const { isRunning, startTimer, pauseTimer, resetTimer } = useTimer()
 
   return (
-    <div className="mt-8 flex justify-center space-x-4">
-      {!isRunning ? (
-        <Button
-          onClick={startTimer}
-          disabled={!selectedTimer}
-          className="h-12 w-12 rounded-full p-0"
-        >
-          <Play className="h-6 w-6" />
-          <span className="sr-only">Start Timer</span>
-        </Button>
-      ) : (
-        <Button
-          onClick={pauseTimer}
-          variant="outline"
-          className="h-12 w-12 rounded-full p-0"
-        >
-          <Pause className="h-6 w-6" />
-          <span className="sr-only">Pause Timer</span>
-        </Button>
-      )}
+    <div className="flex items-center gap-4">
       <Button
-        onClick={resetTimer}
         variant="outline"
-        className="h-12 w-12 rounded-full p-0"
-        disabled={!selectedTimer}
+        size="lg"
+        className="h-12 w-12 rounded-full border-white/10 bg-white/5 p-0 hover:bg-white/10"
+        onClick={resetTimer}
       >
-        <RotateCcw className="h-6 w-6" />
+        <RotateCcw className="h-5 w-5" />
         <span className="sr-only">Reset Timer</span>
+      </Button>
+
+      <Button
+        size="lg"
+        className="h-12 w-28 rounded-full bg-white text-black hover:bg-white/90"
+        onClick={isRunning ? pauseTimer : startTimer}
+      >
+        {isRunning ? (
+          <>
+            <Pause className="mr-2 h-4 w-4" />
+            Pause
+          </>
+        ) : (
+          <>
+            <Play className="mr-2 h-4 w-4" />
+            Start
+          </>
+        )}
       </Button>
     </div>
   )

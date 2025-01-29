@@ -11,8 +11,12 @@ interface TimerStats {
 }
 
 interface TimerContextType {
+  duration: number
+  setDuration: (duration: number) => void
   isRunning: boolean
-  currentTime: number
+  setIsRunning: (isRunning: boolean) => void
+  timeLeft: number
+  setTimeLeft: (timeLeft: number) => void
   selectedTimer: Timer | null
   savedTimers: Timer[]
   isFullscreen: boolean
@@ -33,8 +37,9 @@ const timerCompleteSound = typeof window !== 'undefined'
   : null
 
 export function TimerProvider({ children }: { children: React.ReactNode }) {
+  const [duration, setDuration] = useState(25) // Default to 25 minutes
   const [isRunning, setIsRunning] = useState(false)
-  const [currentTime, setCurrentTime] = useState(0)
+  const [timeLeft, setTimeLeft] = useState(duration * 60) // Convert to seconds
   const [selectedTimer, setSelectedTimer] = useState<Timer | null>(null)
   const [savedTimers, setSavedTimers] = useState<Timer[]>([])
   const [isFullscreen, setIsFullscreen] = useState(false)
@@ -46,7 +51,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
     if (isRunning && selectedTimer) {
       interval = setInterval(() => {
-        setCurrentTime((prevTime) => {
+        setTimeLeft((prevTime) => {
           if (prevTime >= selectedTimer.duration * 60) {
             setIsRunning(false)
             // Play sound
@@ -103,7 +108,7 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
 
   const resetTimer = () => {
     setIsRunning(false)
-    setCurrentTime(0)
+    setTimeLeft(duration * 60)
   }
 
   const toggleFullscreen = () => {
@@ -132,8 +137,12 @@ export function TimerProvider({ children }: { children: React.ReactNode }) {
   return (
     <TimerContext.Provider
       value={{
+        duration,
+        setDuration,
         isRunning,
-        currentTime,
+        setIsRunning,
+        timeLeft,
+        setTimeLeft,
         selectedTimer,
         savedTimers,
         isFullscreen,

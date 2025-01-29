@@ -8,6 +8,7 @@ const publicPaths = new Set([
   "/login",
   "/signup",
   "/auth/callback",
+  "/reset-password",
 ])
 
 // Paths that are always excluded from middleware
@@ -54,10 +55,8 @@ export async function middleware(request: NextRequest) {
     }
 
     return res
-  } catch (error) {
-    console.error("Middleware error:", error)
-    
-    // On error, redirect to login
+  } catch (e) {
+    // In case of any errors, redirect to login
     return NextResponse.redirect(new URL("/login", request.url))
   }
 }
@@ -66,13 +65,12 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     /*
-     * Match all request paths except:
+     * Match all request paths except for the ones starting with:
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * - public folder
-     * - api routes
+     * Feel free to modify this pattern to include more paths.
      */
-    "/((?!_next/static|_next/image|favicon.ico|public|api).*)",
+    "/((?!_next/static|_next/image|favicon.ico).*)",
   ],
 }

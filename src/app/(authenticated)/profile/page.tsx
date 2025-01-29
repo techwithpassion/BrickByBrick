@@ -1,27 +1,27 @@
 import { Metadata } from "next"
-import { ProfileProvider } from "@/contexts/profile-context"
 import { ProfileForm } from "@/components/features/profile/profile-form"
-import { StudyStats } from "@/components/features/profile/study-stats"
-import { StudyStreak } from "@/components/features/profile/study-streak"
+import { Card } from "@/components/ui/card"
 
 export const metadata: Metadata = {
   title: "Profile - Brick By Brick",
-  description: "Manage your account and view your study statistics",
+  description: "Manage your profile settings",
 }
 
 export default function ProfilePage() {
   return (
-    <ProfileProvider>
-      <div className="container mx-auto py-10">
-        <h1 className="text-3xl font-bold">Profile</h1>
-        <div className="mt-8 grid gap-8 lg:grid-cols-[1fr,2fr]">
-          <div className="space-y-8">
-            <ProfileForm />
-            <StudyStreak />
-          </div>
-          <StudyStats />
+    <div className="container max-w-2xl py-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-col gap-8">
+        <div>
+          <h1 className="text-2xl font-semibold">Profile</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage your account settings
+          </p>
         </div>
+
+        <Card className="p-6">
+          <ProfileForm />
+        </Card>
       </div>
-    </ProfileProvider>
+    </div>
   )
 }
