@@ -60,6 +60,8 @@ A comprehensive web application designed for students to manage their studies, c
 - `npm run lint` - Run ESLint
 - `npm run test` - Run tests
 
+## Made with love by Brick By Brick Team
+
 ## License
 
 MIT License
