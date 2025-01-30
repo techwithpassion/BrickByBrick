@@ -317,184 +317,166 @@ export default function CalendarPage() {
     date.getMonth() === currentMonth.getMonth()
 
   return (
-    <div className="min-h-screen bg-black">
-      <div className="grid grid-cols-[300px,1fr] h-screen">
+    <div className="h-full">
+      <div className="flex h-full flex-col lg:flex-row">
         {/* Sidebar */}
-        <div className="border-r border-white/10 p-4 overflow-y-auto">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-white">
-              {format(selectedDate, "MMMM d, yyyy")}
-            </h2>
-          </div>
-
-          {holidaysForDate(selectedDate).length > 0 && (
-            <div className="mb-4">
-              <h3 className="mb-2 text-sm font-medium text-white/60">Holidays</h3>
-              {holidaysForDate(selectedDate).map((holiday) => (
-                <div
-                  key={holiday.name}
-                  className="mb-2 rounded-md bg-red-500/10 p-2 text-sm text-red-500"
-                >
-                  {holiday.name}
-                </div>
-              ))}
-            </div>
-          )}
-
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-white/60">Tasks</h3>
-              <div className="flex items-center gap-2">
-                {isDeleteMode && selectedTasks.length > 0 && (
+        <div className="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-white/5 p-4 lg:h-full lg:overflow-y-auto">
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-white/60">Tasks</h3>
+                <div className="flex items-center gap-2">
+                  {isDeleteMode && selectedTasks.length > 0 && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      onClick={deleteSelectedTasks}
+                    >
+                      Delete ({selectedTasks.length})
+                    </Button>
+                  )}
                   <Button
                     size="sm"
-                    variant="destructive"
-                    onClick={deleteSelectedTasks}
+                    variant={isDeleteMode ? "secondary" : "outline"}
+                    onClick={() => {
+                      setIsDeleteMode(!isDeleteMode)
+                      setSelectedTasks([])
+                    }}
                   >
-                    Delete ({selectedTasks.length})
+                    {isDeleteMode ? "Cancel" : "Select"}
                   </Button>
+                  <Button size="sm" onClick={() => setIsAddingTask(true)}>
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                {tasksForDate(selectedDate).length > 0 ? (
+                  tasksForDate(selectedDate).map((task) => {
+                    const colorIndex = Math.abs(
+                      task.title.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
+                    ) % taskColors.length
+                    const { bg, text } = taskColors[colorIndex]
+
+                    return (
+                      <Card
+                        key={task.id}
+                        className={`p-3 ${isDeleteMode ? "cursor-pointer" : ""} ${
+                          selectedTasks.includes(task.id) ? "ring-2 ring-white" : ""
+                        }`}
+                        onClick={() => isDeleteMode && toggleTaskSelection(task.id)}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className={`font-medium ${text}`}>{task.title}</h4>
+                            {task.description && (
+                              <p className="mt-1 text-sm text-white/60">
+                                {task.description}
+                              </p>
+                            )}
+                          </div>
+                          {!isDeleteMode && (
+                            <div className="flex items-center gap-2">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-8 w-8 p-0"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const { error } = supabase
+                                    .from("tasks")
+                                    .delete()
+                                    .eq("id", task.id)
+                                    .then(({ error }) => {
+                                      if (!error) loadTasks()
+                                    })
+                                }}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="h-4 w-4"
+                                >
+                                  <path d="M3 6h18" />
+                                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                                </svg>
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  const { error } = supabase
+                                    .from("tasks")
+                                    .update({ completed: !task.completed })
+                                    .eq("id", task.id)
+                                    .then(({ error }) => {
+                                      if (!error) loadTasks()
+                                    })
+                                }}
+                              >
+                                {task.completed ? "Completed" : "Mark Done"}
+                              </Button>
+                            </div>
+                          )}
+                        </div>
+                      </Card>
+                    )
+                  })
+                ) : (
+                  <p className="text-center text-sm text-white/60">
+                    No tasks for this date
+                  </p>
                 )}
-                <Button
-                  size="sm"
-                  variant={isDeleteMode ? "secondary" : "outline"}
-                  onClick={() => {
-                    setIsDeleteMode(!isDeleteMode)
-                    setSelectedTasks([])
-                  }}
-                >
-                  {isDeleteMode ? "Cancel" : "Select"}
-                </Button>
-                <Button size="sm" onClick={() => setIsAddingTask(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              {tasksForDate(selectedDate).length > 0 ? (
-                tasksForDate(selectedDate).map((task) => {
-                  const colorIndex = Math.abs(
-                    task.title.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0)
-                  ) % taskColors.length
-                  const { bg, text } = taskColors[colorIndex]
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-white/60">Tests</h3>
+                <Button size="sm" onClick={() => setIsAddingTest(true)}>
+                  <Plus className="h-4 w-4" />
+                </Button>
+              </div>
 
-                  return (
-                    <Card
-                      key={task.id}
-                      className={`p-3 ${isDeleteMode ? "cursor-pointer" : ""} ${
-                        selectedTasks.includes(task.id) ? "ring-2 ring-white" : ""
-                      }`}
-                      onClick={() => isDeleteMode && toggleTaskSelection(task.id)}
-                    >
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <h4 className={`font-medium ${text}`}>{task.title}</h4>
-                          {task.description && (
-                            <p className="mt-1 text-sm text-white/60">
-                              {task.description}
-                            </p>
-                          )}
-                        </div>
-                        {!isDeleteMode && (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const { error } = supabase
-                                  .from("tasks")
-                                  .delete()
-                                  .eq("id", task.id)
-                                  .then(({ error }) => {
-                                    if (!error) loadTasks()
-                                  })
-                              }}
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="h-4 w-4"
-                              >
-                                <path d="M3 6h18" />
-                                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                              </svg>
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                const { error } = supabase
-                                  .from("tasks")
-                                  .update({ completed: !task.completed })
-                                  .eq("id", task.id)
-                                  .then(({ error }) => {
-                                    if (!error) loadTasks()
-                                  })
-                              }}
-                            >
-                              {task.completed ? "Completed" : "Mark Done"}
-                            </Button>
-                          </div>
+              {testDaysForDate(selectedDate).length > 0 ? (
+                testDaysForDate(selectedDate).map((test) => (
+                  <Card key={test.id} className="p-3">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <h4 className="font-medium text-red-500">
+                          {courses.find((c) => c.id === test.course_id)?.name} - {test.subject}
+                        </h4>
+                        {test.description && (
+                          <p className="mt-1 text-sm text-white/60">
+                            {test.description}
+                          </p>
                         )}
                       </div>
-                    </Card>
-                  )
-                })
+                    </div>
+                  </Card>
+                ))
               ) : (
                 <p className="text-center text-sm text-white/60">
-                  No tasks for this date
+                  No tests scheduled for this date
                 </p>
               )}
             </div>
           </div>
-
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-white/60">Tests</h3>
-              <Button size="sm" onClick={() => setIsAddingTest(true)}>
-                <Plus className="h-4 w-4" />
-              </Button>
-            </div>
-
-            {testDaysForDate(selectedDate).length > 0 ? (
-              testDaysForDate(selectedDate).map((test) => (
-                <Card key={test.id} className="p-3">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h4 className="font-medium text-red-500">
-                        {courses.find((c) => c.id === test.course_id)?.name} - {test.subject}
-                      </h4>
-                      {test.description && (
-                        <p className="mt-1 text-sm text-white/60">
-                          {test.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              ))
-            ) : (
-              <p className="text-center text-sm text-white/60">
-                No tests scheduled for this date
-              </p>
-            )}
-          </div>
         </div>
 
         {/* Main Calendar */}
-        <div className="p-4 overflow-y-auto">
-          <div className="flex items-center justify-between mb-6">
+        <div className="flex-1 p-2 lg:p-4 overflow-y-auto">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-2">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-semibold text-white">
+              <h1 className="text-xl lg:text-2xl font-semibold text-white">
                 {format(currentMonth, "MMMM yyyy")}
               </h1>
               <div className="flex items-center gap-1">
@@ -643,11 +625,12 @@ export default function CalendarPage() {
             </Dialog>
           </div>
 
+          {/* Calendar Days Header */}
           <div className="grid grid-cols-7 gap-px bg-white/5">
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
               <div
                 key={day}
-                className="p-2 text-center text-sm font-medium text-white/60"
+                className="p-2 text-center text-xs sm:text-sm font-medium text-white/60"
               >
                 {day}
               </div>
@@ -663,7 +646,7 @@ export default function CalendarPage() {
                 <button
                   key={date.toString()}
                   className={`
-                    min-h-[120px] p-2 text-left hover:bg-white/5
+                    min-h-[80px] sm:min-h-[120px] p-1 sm:p-2 text-left hover:bg-white/5
                     ${isSelected ? "bg-white/10" : ""}
                     ${!isCurrentMonth(date) ? "opacity-50" : ""}
                     ${isToday ? "ring-2 ring-blue-500" : ""}
@@ -672,7 +655,7 @@ export default function CalendarPage() {
                 >
                   <span
                     className={`
-                      inline-block rounded-full w-8 h-8 text-center leading-8
+                      inline-flex items-center justify-center rounded-full w-6 h-6 sm:w-8 sm:h-8 text-sm sm:text-base
                       ${isSelected ? "bg-white text-black" : "text-white"}
                       ${isToday ? "font-bold" : ""}
                     `}
@@ -683,7 +666,7 @@ export default function CalendarPage() {
                     {dayHolidays.map((holiday) => (
                       <div
                         key={holiday.name}
-                        className="truncate rounded bg-red-500/10 px-1 py-px text-xs text-red-500"
+                        className="truncate rounded bg-red-500/10 px-1 py-px text-[10px] sm:text-xs text-red-500"
                         title={holiday.name}
                       >
                         {holiday.name}
@@ -692,7 +675,7 @@ export default function CalendarPage() {
                     {dayTestDays.map((test) => (
                       <div
                         key={test.id}
-                        className="truncate rounded bg-red-500/20 px-1 py-px text-xs text-red-500"
+                        className="truncate rounded bg-red-500/20 px-1 py-px text-[10px] sm:text-xs text-red-500"
                         title={`${courses.find((c) => c.id === test.course_id)?.name} - ${test.subject}`}
                       >
                         Test: {test.subject}
@@ -708,7 +691,7 @@ export default function CalendarPage() {
                         <div
                           key={task.id}
                           className={`
-                            truncate rounded px-1 py-px text-xs
+                            truncate rounded px-1 py-px text-[10px] sm:text-xs
                             ${task.completed ? "bg-green-500/10 text-green-500" : `${bg} ${text}`}
                             ${selectedTasks.includes(task.id) ? "ring-1 ring-white" : ""}
                           `}

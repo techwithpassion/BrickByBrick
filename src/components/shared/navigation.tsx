@@ -19,6 +19,7 @@ import {
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/components/ui/use-toast"
+import { PWAInstallButton } from "@/components/pwa/install-button"
 
 const navigationItems = [
   {
@@ -158,13 +159,16 @@ export function Navigation() {
                 </Link>
               )
             })}
-            <button
-              onClick={handleSignOut}
-              className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-            >
-              <LogOut className="h-5 w-5" />
-              Sign Out
-            </button>
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={handleSignOut}
+                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+              >
+                <LogOut className="h-5 w-5" />
+                Sign Out
+              </button>
+              <PWAInstallButton />
+            </div>
           </div>
         </div>
       </nav>
@@ -220,13 +224,16 @@ export function Navigation() {
                   </Link>
                 )
               })}
-              <button
-                onClick={handleSignOut}
-                className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
-              >
-                <LogOut className="h-5 w-5" />
-                Sign Out
-              </button>
+              <div className="flex flex-col gap-1">
+                <button
+                  onClick={handleSignOut}
+                  className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
+                >
+                  <LogOut className="h-5 w-5" />
+                  Sign Out
+                </button>
+                <PWAInstallButton />
+              </div>
             </div>
           </nav>
         </div>
