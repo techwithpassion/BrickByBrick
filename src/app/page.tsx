@@ -17,29 +17,107 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="container relative min-h-screen flex-col items-center justify-center md:grid lg:max-w-none lg:grid-cols-2 lg:px-0">
-      <div className="relative hidden h-full flex-col bg-zinc-950 p-10 text-white lg:flex dark:border-r dark:border-zinc-800">
-        <div className="absolute inset-0 bg-gradient-to-b from-emerald-800 to-teal-900" />
-        <div className="relative z-20 flex items-center text-lg font-medium">
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className="mr-2 h-6 w-6"
-          >
-            <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-          </svg>
-          Brick By Brick
-        </div>
-        <div className="relative z-20 mt-auto">
-          <blockquote className="space-y-2">
-            <p className="text-lg">
-              "The beautiful thing about learning is that no one can take it away from you."
+      <div className="relative hidden h-full flex-col bg-zinc-950 text-white lg:flex dark:border-r dark:border-zinc-800">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 to-zinc-900" />
+        
+        {/* Fixed position content */}
+        <div className="relative z-20 h-full flex flex-col p-12">
+          {/* Logo */}
+          <div className="flex items-center text-lg font-medium">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="mr-2 h-6 w-6"
+            >
+              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
+            </svg>
+            Brick By Brick
+          </div>
+
+          {/* Main content - centered */}
+          <div className="flex-1 flex flex-col justify-center">
+            <h1 className="text-4xl font-bold tracking-tight">
+              Build Your Future,{" "}
+              <span className="text-emerald-400">One Study Session</span>{" "}
+              at a Time
+            </h1>
+            <p className="mt-4 text-zinc-300 text-lg">
+              Master your subjects efficiently with our intelligent study companion.
             </p>
-            <footer className="text-sm text-zinc-200">B.B. King</footer>
+
+            {/* Features - simplified */}
+            <div className="mt-8 grid gap-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-emerald-500/10 p-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5 text-emerald-400"
+                  >
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <div className="text-sm text-zinc-300">Smart Study Timer</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-emerald-500/10 p-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5 text-emerald-400"
+                  >
+                    <path d="M12 20v-6M6 20V10M18 20V4" />
+                  </svg>
+                </div>
+                <div className="text-sm text-zinc-300">Progress Analytics</div>
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-emerald-500/10 p-2">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="h-5 w-5 text-emerald-400"
+                  >
+                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2" />
+                    <line x1="16" y1="2" x2="16" y2="6" />
+                    <line x1="8" y1="2" x2="8" y2="6" />
+                    <line x1="3" y1="10" x2="21" y2="10" />
+                  </svg>
+                </div>
+                <div className="text-sm text-zinc-300">Smart Scheduling</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Quote - at bottom */}
+          <blockquote>
+            <p className="text-lg text-zinc-300">
+              "Success is built brick by brick, habit by habit."
+            </p>
+            <footer className="mt-2 text-sm text-emerald-400">
+              Dr. Sarah Chen • Education Expert
+            </footer>
           </blockquote>
         </div>
       </div>
@@ -192,7 +270,7 @@ export default function HomePage() {
               Trusted by students worldwide
             </p>
             <p className="text-xs text-zinc-500 dark:text-zinc-400">
-              🔒 Secure login • Free to use • No credit card required
+              Secure login • Free to use • No credit card required
             </p>
           </div>
         </div>

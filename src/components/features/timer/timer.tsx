@@ -259,6 +259,19 @@ export function Timer({ initialDuration = 25 }: TimerProps = {}) {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Ensure the reschedule date is not in the past
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+
+      if (rescheduleDate < today) {
+        toast({
+          title: "Invalid date",
+          description: "Please select a future date",
+          variant: "destructive",
+        })
+        return
+      }
+
       const { error } = await supabase
         .from("tasks")
         .update({ 
@@ -270,6 +283,7 @@ export function Timer({ initialDuration = 25 }: TimerProps = {}) {
       if (error) throw error
 
       setShowRescheduleDialog(false)
+      setRescheduleDate(undefined)
       loadTasks()
 
       toast({
@@ -716,46 +730,56 @@ export function Timer({ initialDuration = 25 }: TimerProps = {}) {
         </AlertDialog>
 
         {/* Reschedule dialog */}
-        {showRescheduleDialog && (
-          <AlertDialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
-            <AlertDialogContent className="sm:max-w-md bg-zinc-900 border-zinc-800">
+        <AlertDialog open={showRescheduleDialog} onOpenChange={setShowRescheduleDialog}>
+          <AlertDialogContent className="max-w-[300px] p-0 bg-zinc-900 border border-zinc-800">
+            <div className="p-4 border-b border-zinc-800">
               <AlertDialogHeader>
-                <AlertDialogTitle className="text-xl text-white">Reschedule Task</AlertDialogTitle>
-                <AlertDialogDescription className="text-base text-zinc-400">
-                  Choose a new date for this task.
+                <AlertDialogTitle className="text-lg font-medium text-white">
+                  Reschedule Task
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-zinc-400">
+                  Choose a new date for this task
                 </AlertDialogDescription>
               </AlertDialogHeader>
-              <div className="py-6">
-                <Calendar
-                  mode="single"
-                  selected={rescheduleDate}
-                  onSelect={setRescheduleDate}
-                  initialFocus
-                  disabled={(date) => date < new Date()}
-                  className="rounded-md border-zinc-800 bg-zinc-900 text-white"
-                />
-              </div>
-              <AlertDialogFooter>
-                <AlertDialogCancel 
-                  className="h-11 bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700"
-                  onClick={() => {
-                    setShowRescheduleDialog(false)
-                    setRescheduleDate(undefined)
-                  }}
-                >
-                  Cancel
-                </AlertDialogCancel>
-                <AlertDialogAction 
-                  className="h-11 bg-zinc-900 hover:bg-zinc-800 text-white"
-                  onClick={handleReschedule} 
-                  disabled={!rescheduleDate}
-                >
-                  Reschedule
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        )}
+            </div>
+
+            <div className="px-1">
+              <Calendar
+                mode="single"
+                selected={rescheduleDate}
+                onSelect={setRescheduleDate}
+                initialFocus
+                disabled={(date) => {
+                  const today = new Date()
+                  today.setHours(0, 0, 0, 0)
+                  return date < today
+                }}
+              />
+            </div>
+
+            <div className="flex gap-2 p-4 border-t border-zinc-800">
+              <AlertDialogCancel 
+                onClick={() => {
+                  setShowRescheduleDialog(false)
+                  setRescheduleDate(undefined)
+                }}
+                className="flex-1 bg-zinc-800 hover:bg-zinc-700 text-white border-zinc-700"
+              >
+                Cancel
+              </AlertDialogCancel>
+              <AlertDialogAction
+                onClick={handleReschedule}
+                disabled={!rescheduleDate}
+                className={cn(
+                  "flex-1 bg-emerald-600 text-white hover:bg-emerald-500 transition-colors",
+                  !rescheduleDate && "opacity-50 cursor-not-allowed"
+                )}
+              >
+                Reschedule
+              </AlertDialogAction>
+            </div>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </div>
   )

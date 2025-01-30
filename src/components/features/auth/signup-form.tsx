@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
+import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -22,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { useToast } from "@/components/ui/use-toast"
 
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
@@ -42,6 +44,8 @@ const courses = [
 export function SignUpForm() {
   const router = useRouter()
   const [isLoading, setIsLoading] = React.useState(false)
+  const supabase = createClientComponentClient()
+  const { toast } = useToast()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -57,11 +61,37 @@ export function SignUpForm() {
     setIsLoading(true)
 
     try {
-      // Here you would typically call your authentication service
-      console.log(values)
-      router.push("/dashboard")
+      // Sign up the user
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: values.email,
+        password: values.password,
+        options: {
+          data: {
+            full_name: values.name,
+            course: values.course,
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      })
+
+      if (authError) throw authError
+
+      if (authData.user) {
+        toast({
+          title: "Check your email!",
+          description: "We've sent you a confirmation link to verify your account.",
+        })
+
+        // Redirect to a confirmation page instead of dashboard
+        router.push("/auth/confirm-email")
+      }
     } catch (error) {
-      console.error(error)
+      console.error("Error:", error)
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to create account",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }

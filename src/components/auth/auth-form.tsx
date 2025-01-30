@@ -11,6 +11,7 @@ import { Icons } from "@/components/shared/icons"
 
 export function AuthForm({ type }: { type: "login" | "signup" }) {
   const [isLoading, setIsLoading] = useState(false)
+  const [isNavigating, setIsNavigating] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -36,6 +37,9 @@ export function AuthForm({ type }: { type: "login" | "signup" }) {
           password: formData.password,
         })
         if (error) throw error
+        
+        // Set navigating state before pushing to dashboard
+        setIsNavigating(true)
         router.push("/dashboard")
         router.refresh()
       } else {
@@ -53,6 +57,7 @@ export function AuthForm({ type }: { type: "login" | "signup" }) {
         })
       }
     } catch (error) {
+      setIsNavigating(false)
       toast({
         title: "Error",
         description: error.message,
@@ -64,35 +69,47 @@ export function AuthForm({ type }: { type: "login" | "signup" }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="email">Email</Label>
-        <Input
-          id="email"
-          type="email"
-          value={formData.email}
-          onChange={handleChange}
-          placeholder="name@example.com"
-          required
-          disabled={isLoading}
-        />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="password">Password</Label>
-        <Input
-          id="password"
-          type="password"
-          value={formData.password}
-          onChange={handleChange}
-          placeholder="••••••••"
-          required
-          disabled={isLoading}
-        />
-      </div>
-      <Button type="submit" className="w-full" disabled={isLoading}>
-        {isLoading && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
-        {type === "login" ? "Sign In" : "Sign Up"}
-      </Button>
-    </form>
+    <div className="relative">
+      {isNavigating && (
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-2">
+            <Icons.spinner className="h-8 w-8 animate-spin text-emerald-500" />
+            <p className="text-sm text-muted-foreground">
+              Preparing your dashboard...
+            </p>
+          </div>
+        </div>
+      )}
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor="email">Email</Label>
+          <Input
+            id="email"
+            type="email"
+            value={formData.email}
+            onChange={handleChange}
+            placeholder="name@example.com"
+            required
+            disabled={isLoading || isNavigating}
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="password">Password</Label>
+          <Input
+            id="password"
+            type="password"
+            value={formData.password}
+            onChange={handleChange}
+            placeholder="••••••••"
+            required
+            disabled={isLoading || isNavigating}
+          />
+        </div>
+        <Button type="submit" className="w-full" disabled={isLoading || isNavigating}>
+          {(isLoading || isNavigating) && <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />}
+          {type === "login" ? "Sign In" : "Sign Up"}
+        </Button>
+      </form>
+    </div>
   )
 }

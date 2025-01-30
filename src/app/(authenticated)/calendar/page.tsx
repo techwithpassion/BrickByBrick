@@ -259,11 +259,14 @@ export default function CalendarPage() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
+      // Format the date correctly
+      const formattedDate = format(selectedDate, 'yyyy-MM-dd')
+
       const { error } = await supabase.from("test_days").insert({
         user_id: user.id,
         course_id: selectedCourse,
         subject: selectedSubject,
-        test_date: selectedDate.toISOString().split("T")[0],
+        test_date: formattedDate,
         description: testDescription,
       })
 
@@ -271,7 +274,7 @@ export default function CalendarPage() {
 
       toast({
         title: "Test day added",
-        description: "Test has been scheduled successfully",
+        description: `Test scheduled for ${format(selectedDate, 'MMM dd, yyyy')}`,
       })
 
       setIsAddingTest(false)
