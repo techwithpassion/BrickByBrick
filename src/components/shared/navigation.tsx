@@ -2,8 +2,19 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { usePWAInstall } from "@/hooks/use-pwa-install"
 import { Button } from "@/components/ui/button"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { useState } from "react"
+import { cn } from "@/lib/utils"
+import { useAuth } from "@/hooks/use-auth"
+import { useToast } from "@/components/ui/use-toast"
 import {
   LayoutDashboard,
   Timer,
@@ -18,10 +29,6 @@ import {
   LogOut,
   Download,
 } from "lucide-react"
-import { useState } from "react"
-import { useAuth } from "@/hooks/use-auth"
-import { useToast } from "@/components/ui/use-toast"
-import { usePWAInstall } from "@/hooks/use-pwa-install"
 
 const navigationItems = [
   {
@@ -71,10 +78,19 @@ const userNavigation = [
 
 export function Navigation() {
   const pathname = usePathname()
+  const { isInstallable, install, isIOS, getInstallInstructions } = usePWAInstall()
+  const [showInstallDialog, setShowInstallDialog] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { signOut } = useAuth()
   const { toast } = useToast()
-  const { isInstallable, install } = usePWAInstall()
+
+  const handleInstall = () => {
+    if (isIOS) {
+      setShowInstallDialog(true)
+    } else {
+      install()
+    }
+  }
 
   const handleSignOut = async () => {
     try {
@@ -92,6 +108,8 @@ export function Navigation() {
     }
   }
 
+  const instructions = getInstallInstructions()
+
   return (
     <>
       {/* Mobile Navigation Button */}
@@ -99,18 +117,31 @@ export function Navigation() {
         <Link href="/dashboard" className="text-xl font-semibold text-white">
           Brick By Brick
         </Link>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="lg:hidden text-white"
-          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-        >
-          {isMobileMenuOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
+        <div className="flex items-center space-x-4">
+          {isInstallable && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInstall}
+              className="flex items-center text-white"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Install
+            </Button>
           )}
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="lg:hidden text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <Menu className="h-6 w-6" />
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Desktop Navigation */}
@@ -179,7 +210,7 @@ export function Navigation() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={install}
+                  onClick={handleInstall}
                   className="hidden sm:flex"
                 >
                   <Download className="mr-2 h-4 w-4" />
@@ -254,8 +285,8 @@ export function Navigation() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={install}
-                    className="hidden sm:flex"
+                    onClick={handleInstall}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-white/60 transition-colors hover:bg-white/5 hover:text-white"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Install App
@@ -266,6 +297,21 @@ export function Navigation() {
           </nav>
         </div>
       )}
+
+      <Dialog open={showInstallDialog} onOpenChange={setShowInstallDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{instructions.title}</DialogTitle>
+            <DialogDescription>
+              <div className="mt-4 space-y-2">
+                {instructions.steps.map((step, index) => (
+                  <p key={index}>{step}</p>
+                ))}
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
     </>
   )
 }
