@@ -10,16 +10,18 @@ import {
   Calendar,
   BarChart3,
   Settings,
+  ListTodo,
   User,
   Menu,
   X,
   HelpCircle,
   LogOut,
+  Download,
 } from "lucide-react"
 import { useState } from "react"
 import { useAuth } from "@/hooks/use-auth"
 import { useToast } from "@/components/ui/use-toast"
-import { PWAInstallButton } from "@/components/pwa/install-button"
+import { usePWAInstall } from "@/hooks/use-pwa-install"
 
 const navigationItems = [
   {
@@ -36,6 +38,11 @@ const navigationItems = [
     name: "Calendar",
     href: "/calendar",
     icon: Calendar,
+  },
+  {
+    name: "Tasks",
+    href: "/tasks",
+    icon: ListTodo,
   },
   {
     name: "Analytics",
@@ -67,6 +74,7 @@ export function Navigation() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const { signOut } = useAuth()
   const { toast } = useToast()
+  const { isInstallable, install } = usePWAInstall()
 
   const handleSignOut = async () => {
     try {
@@ -167,7 +175,17 @@ export function Navigation() {
                 <LogOut className="h-5 w-5" />
                 Sign Out
               </button>
-              <PWAInstallButton />
+              {isInstallable && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={install}
+                  className="hidden sm:flex"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Install App
+                </Button>
+              )}
             </div>
           </div>
         </div>
@@ -232,7 +250,17 @@ export function Navigation() {
                   <LogOut className="h-5 w-5" />
                   Sign Out
                 </button>
-                <PWAInstallButton />
+                {isInstallable && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={install}
+                    className="hidden sm:flex"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Install App
+                  </Button>
+                )}
               </div>
             </div>
           </nav>

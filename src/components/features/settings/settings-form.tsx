@@ -26,6 +26,9 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
 import { useTheme } from "next-themes"
+import { Separator } from "@/components/ui/separator"
+import { NotificationSettings } from "./notification-settings"
+import { ProfileForm } from "./profile-form"
 
 interface SettingsFormValues {
   email: string
@@ -116,104 +119,131 @@ export function SettingsForm() {
   }
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Account Settings</CardTitle>
-            <CardDescription>
-              Update your account settings and preferences
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <Input {...field} type="email" disabled={isLoading} />
-                  </FormControl>
-                  <FormDescription>
-                    This is the email associated with your account
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="currentPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Current Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="password"
-                      disabled={isLoading}
-                      placeholder="Enter current password"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Enter your current password to change it
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="newPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>New Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      {...field}
-                      type="password"
-                      disabled={isLoading}
-                      placeholder="Enter new password"
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Choose a new password (minimum 6 characters)
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="theme"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Theme</FormLabel>
-                  <FormControl>
-                    <select
-                      {...field}
-                      disabled={isLoading}
-                      className="w-full rounded-md border border-input bg-background px-3 py-2"
-                    >
-                      <option value="light">Light</option>
-                      <option value="dark">Dark</option>
-                      <option value="system">System</option>
-                    </select>
-                  </FormControl>
-                  <FormDescription>
-                    Select your preferred theme
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </CardContent>
-        </Card>
-        <Button type="submit" disabled={isLoading}>
-          {isLoading ? "Saving..." : "Save changes"}
-        </Button>
-      </form>
-    </Form>
+    <div className="space-y-6">
+      <div>
+        <h3 className="text-lg font-medium">Profile</h3>
+        <p className="text-sm text-muted-foreground">
+          Update your profile information.
+        </p>
+      </div>
+      <Separator />
+      <ProfileForm />
+
+      <div className="mt-8">
+        <h3 className="text-lg font-medium">Account Settings</h3>
+        <p className="text-sm text-muted-foreground">
+          Update your account settings and preferences
+        </p>
+      </div>
+      <Separator />
+      <Card>
+        <CardHeader>
+          <CardTitle>Account Settings</CardTitle>
+          <CardDescription>
+            Update your account settings and preferences
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <Input {...field} type="email" disabled={isLoading} />
+                    </FormControl>
+                    <FormDescription>
+                      This is the email associated with your account
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="currentPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Current Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        disabled={isLoading}
+                        placeholder="Enter current password"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Enter your current password to change it
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="newPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>New Password</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...field}
+                        type="password"
+                        disabled={isLoading}
+                        placeholder="Enter new password"
+                      />
+                    </FormControl>
+                    <FormDescription>
+                      Choose a new password (minimum 6 characters)
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="theme"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Theme</FormLabel>
+                    <FormControl>
+                      <select
+                        {...field}
+                        disabled={isLoading}
+                        className="w-full rounded-md border border-input bg-background px-3 py-2"
+                      >
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="system">System</option>
+                      </select>
+                    </FormControl>
+                    <FormDescription>
+                      Select your preferred theme
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </form>
+          </Form>
+          <Button type="submit" disabled={isLoading}>
+            {isLoading ? "Saving..." : "Save changes"}
+          </Button>
+        </CardContent>
+      </Card>
+
+      <div className="mt-8">
+        <h3 className="text-lg font-medium">Notifications</h3>
+        <p className="text-sm text-muted-foreground">
+          Configure your daily notification preferences.
+        </p>
+      </div>
+      <Separator />
+      <NotificationSettings />
+    </div>
   )
 }

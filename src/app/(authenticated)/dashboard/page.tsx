@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { useUser } from "@/hooks/use-user"
+import { useDashboardData } from "@/hooks/use-dashboard-data"
 import { format, startOfMonth, endOfMonth, eachDayOfInterval } from "date-fns"
 import {
   BarChart,
@@ -59,75 +60,38 @@ interface Task {
 }
 
 export default function DashboardPage() {
-  const [studySessions, setStudySessions] = useState<StudySession[]>([])
-  const [tasks, setTasks] = useState<Task[]>([])
-  const [recentSessions, setRecentSessions] = useState<StudySession[]>([])
-  const [loading, setLoading] = useState(true)
-  const [userName, setUserName] = useState<string>("")
-  const supabase = createClientComponentClient()
   const { user } = useUser()
+  const { data, error, isLoading } = useDashboardData(user?.id)
 
-  useEffect(() => {
-    if (!user) return
-    loadData()
-  }, [user])
-
-  const loadData = async () => {
-    try {
-      const startDate = startOfMonth(new Date())
-      const endDate = endOfMonth(new Date())
-
-      // Fetch user profile
-      const { data: profileData, error: profileError } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", user?.id)
-        .single()
-
-      if (profileError) throw profileError
-      if (profileData?.full_name) {
-        setUserName(profileData.full_name)
-      }
-
-      // Fetch study sessions
-      const { data: sessionsData, error: sessionsError } = await supabase
-        .from("study_sessions")
-        .select("*")
-        .eq("user_id", user?.id)
-        .gte("session_start_time", startDate.toISOString())
-        .lte("session_start_time", endDate.toISOString())
-        .order("session_start_time", { ascending: true })
-
-      if (sessionsError) throw sessionsError
-
-      // Fetch tasks
-      const { data: tasksData, error: tasksError } = await supabase
-        .from("tasks")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-
-      if (tasksError) throw tasksError
-
-      // Fetch recent study sessions
-      const { data: recentSessionsData, error: recentSessionsError } = await supabase
-        .from("study_sessions")
-        .select("*")
-        .eq("user_id", user?.id)
-        .order("created_at", { ascending: false })
-        .limit(5)
-
-      if (recentSessionsError) throw recentSessionsError
-
-      setStudySessions(sessionsData || [])
-      setTasks(tasksData || [])
-      setRecentSessions(recentSessionsData || [])
-    } catch (error) {
-      console.error("Error loading dashboard data:", error)
-    } finally {
-      setLoading(false)
-    }
+  const timeOfDay = new Date().getHours()
+  let greeting = "Good morning"
+  if (timeOfDay >= 12 && timeOfDay < 17) {
+    greeting = "Good afternoon"
+  } else if (timeOfDay >= 17) {
+    greeting = "Good evening"
   }
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl text-zinc-400">Loading your dashboard...</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-xl text-red-400">Error loading dashboard data</div>
+      </div>
+    )
+  }
+
+  if (!data) {
+    return null
+  }
+
+  const { profile, sessions, tasks, recentSessions } = data
 
   // Prepare data for charts
   const daysInMonth = eachDayOfInterval({
@@ -137,7 +101,7 @@ export default function DashboardPage() {
 
   const studyTimeData = daysInMonth.map((day) => {
     const dayStr = format(day, "yyyy-MM-dd")
-    const dayStudyTime = studySessions
+    const dayStudyTime = sessions
       .filter((session) => session.session_start_time.startsWith(dayStr))
       .reduce((sum, session) => sum + session.session_duration, 0)
 
@@ -159,25 +123,8 @@ export default function DashboardPage() {
   ]
 
   const COLORS = ["#22c55e", "#3b82f6"]
-
   const totalStudyTime = recentSessions.reduce((acc, session) => acc + session.duration_minutes, 0)
   const completedTasks = tasks.filter(task => task.completed).length
-  const timeOfDay = new Date().getHours()
-  
-  let greeting = "Good morning"
-  if (timeOfDay >= 12 && timeOfDay < 17) {
-    greeting = "Good afternoon"
-  } else if (timeOfDay >= 17) {
-    greeting = "Good evening"
-  }
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="text-xl text-zinc-400">Loading your dashboard...</div>
-      </div>
-    )
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -186,7 +133,7 @@ export default function DashboardPage() {
         <div className="space-y-4">
           <div className="flex justify-between items-center">
             <h1 className="text-4xl font-bold text-white">
-              {greeting}, {userName || user?.email?.split("@")[0]}
+              {greeting}, {profile?.full_name || user?.email?.split("@")[0]}
             </h1>
             <Badge variant="outline" className="text-base px-4 py-1">
               {format(new Date(), "EEEE, MMMM do")}

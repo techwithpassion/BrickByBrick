@@ -54,17 +54,33 @@
       "purpose": "any maskable"
     }
   ],
+  "screenshots": [
+    {
+      "src": "/screenshots/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "1170x2532",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
   "categories": ["productivity", "education"],
   "shortcuts": [
     {
       "name": "Calendar",
       "url": "/calendar",
-      "description": "View your calendar"
+      "description": "View your calendar",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
     },
     {
       "name": "Dashboard",
       "url": "/dashboard",
-      "description": "Go to dashboard"
+      "description": "Go to dashboard",
+      "icons": [{ "src": "/icons/icon-96x96.png", "sizes": "96x96", "type": "image/png" }]
     }
   ]
 }

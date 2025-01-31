@@ -17,6 +17,11 @@ const excludedPaths = [
   "/api",
   "/static",
   "/favicon.ico",
+  "/manifest.json",
+  "/sw.js",
+  "/workbox-",
+  "/icons/",
+  "/custom-sw.js",
 ]
 
 export async function middleware(request: NextRequest) {
@@ -56,7 +61,7 @@ export async function middleware(request: NextRequest) {
 
     return res
   } catch (e) {
-    // In case of any errors, redirect to login
+    // If there's an error, redirect to login
     return NextResponse.redirect(new URL("/login", request.url))
   }
 }
@@ -69,8 +74,8 @@ export const config = {
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
+     * - public files (public folder)
      */
-    "/((?!_next/static|_next/image|favicon.ico).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 }

@@ -2,7 +2,6 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  // disable: false,
   disable: process.env.NODE_ENV === 'development',
   buildExcludes: [/middleware-manifest\.json$/],
   publicExcludes: ['!noprecache/**/*'],
@@ -194,6 +193,19 @@ const nextConfig = withPWA({
             value: 'camera=(), microphone=(), geolocation=()'
           }
         ]
+      },
+      {
+        source: '/manifest.json',
+        headers: [
+          {
+            key: 'Content-Type',
+            value: 'application/manifest+json',
+          },
+          {
+            key: 'Access-Control-Allow-Origin',
+            value: '*'
+          }
+        ],
       }
     ]
   }

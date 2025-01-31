@@ -9,6 +9,16 @@ const inter = Inter({ subsets: ["latin"] })
 export const metadata: Metadata = {
   title: "Brick By Brick",
   description: "Build your knowledge, one session at a time.",
+  manifest: "/manifest.json",
+  // themeColor: "#000000",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "BrickByBrick",
+  },
+  formatDetection: {
+    telephone: false,
+  },
 }
 
 export default function RootLayout({

@@ -42,6 +42,7 @@ import {
   endOfWeek,
 } from "date-fns"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
+import { requestNotificationPermission, scheduleTaskReminder } from "@/lib/notifications"
 
 interface Task {
   id: string
@@ -107,6 +108,53 @@ export default function CalendarPage() {
   const [selectedCourse, setSelectedCourse] = useState<string>("")
   const [selectedSubject, setSelectedSubject] = useState<string>("")
   const [testDescription, setTestDescription] = useState("")
+
+  useEffect(() => {
+    requestNotificationPermission()
+  }, [])
+
+  useEffect(() => {
+    const fetchTasks = async () => {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      // Get tasks for the visible calendar range (including prev/next month overflow)
+      const visibleStart = startOfWeek(startOfMonth(currentMonth))
+      const visibleEnd = endOfWeek(endOfMonth(currentMonth))
+
+      const { data, error } = await supabase
+        .from("tasks")
+        .select("*")
+        .eq("user_id", user.id)
+        .gte("due_date", format(visibleStart, "yyyy-MM-dd"))
+        .lte("due_date", format(visibleEnd, "yyyy-MM-dd"))
+        .order("due_date", { ascending: true })
+
+      if (error) throw error
+      setTasks(data || [])
+
+      // Schedule reminders for upcoming tasks
+      data?.forEach(task => {
+        if (!task.completed) {
+          scheduleTaskReminder(task)
+        }
+      })
+    }
+
+    fetchTasks()
+
+    // Subscribe to tasks changes
+    const channel = supabase
+      .channel('tasks_changes')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
+        fetchTasks()
+      })
+      .subscribe()
+
+    return () => {
+      channel.unsubscribe()
+    }
+  }, [supabase, currentMonth])
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks((prev) =>

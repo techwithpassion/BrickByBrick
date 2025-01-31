@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useState } from "react"
 import { createClientComponentClient } from "@supabase/auth-helpers-nextjs"
 import type { SupabaseClient } from "@supabase/auth-helpers-nextjs"
 import type { Database } from "@/types/supabase"
+import { SWRConfig } from 'swr'
 
 type SupabaseContext = {
   supabase: SupabaseClient<Database>
@@ -29,9 +30,17 @@ export function SupabaseProvider({
   }, [supabase])
 
   return (
-    <Context.Provider value={{ supabase }}>
-      {children}
-    </Context.Provider>
+    <SWRConfig 
+      value={{
+        revalidateOnFocus: false,
+        revalidateOnReconnect: false,
+        dedupingInterval: 10000,
+      }}
+    >
+      <Context.Provider value={{ supabase }}>
+        {children}
+      </Context.Provider>
+    </SWRConfig>
   )
 }
 
