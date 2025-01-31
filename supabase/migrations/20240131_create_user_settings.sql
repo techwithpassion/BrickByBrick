@@ -17,6 +17,11 @@ CREATE TABLE IF NOT EXISTS public.user_settings (
 -- Set up RLS (Row Level Security)
 ALTER TABLE public.user_settings ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "Users can view their own settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Users can insert their own settings" ON public.user_settings;
+DROP POLICY IF EXISTS "Users can update their own settings" ON public.user_settings;
+
 -- Create policies
 CREATE POLICY "Users can view their own settings"
     ON public.user_settings FOR SELECT
@@ -31,6 +36,9 @@ CREATE POLICY "Users can update their own settings"
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
+-- Drop existing trigger if it exists
+DROP TRIGGER IF EXISTS handle_updated_at ON public.user_settings;
+
 -- Create function to handle updated_at
 CREATE OR REPLACE FUNCTION public.handle_updated_at()
 RETURNS TRIGGER AS $$
@@ -40,7 +48,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create trigger for updated_at
+-- Create trigger for updated_at (using existing handle_updated_at function)
 CREATE TRIGGER handle_updated_at
     BEFORE UPDATE ON public.user_settings
     FOR EACH ROW

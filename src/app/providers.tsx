@@ -7,6 +7,7 @@ import { SearchProvider } from "@/contexts/search-context"
 import { NotificationsProvider } from "@/contexts/notifications-context"
 import { StudyGroupProvider } from "@/contexts/study-group-context"
 import { SupabaseProvider } from "@/lib/supabase/supabase-provider"
+import { PWAInit } from "@/components/features/pwa/pwa-init"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   return (
@@ -21,6 +22,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           <SearchProvider>
             <SupabaseProvider>
               <StudyGroupProvider>
+                <PWAInit />
                 {children}
               </StudyGroupProvider>
             </SupabaseProvider>

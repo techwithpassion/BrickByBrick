@@ -1,14 +1,13 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useEffect, useState } from "react"
+import { Switch } from "@/components/ui/switch"
+import { Label } from "@/components/ui/label"
+import { Input } from "@/components/ui/input"
 import { useSupabase } from "@/lib/supabase/supabase-provider"
 import { useToast } from "@/components/ui/use-toast"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { requestNotificationPermission } from "@/lib/notifications"
 
 interface NotificationSettings {
   enabled: boolean
@@ -27,12 +26,45 @@ export function NotificationSettings() {
     eveningMessage: "Good night! Great job on your progress today.",
   })
   const [isLoading, setIsLoading] = useState(true)
+  const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>("default")
   const { supabase } = useSupabase()
   const { toast } = useToast()
 
   useEffect(() => {
     loadSettings()
+    checkNotificationPermission()
   }, [])
+
+  const checkNotificationPermission = async () => {
+    if (!("Notification" in window)) {
+      setPermissionStatus("denied")
+      return
+    }
+    
+    const status = await Notification.permission
+    setPermissionStatus(status)
+  }
+
+  const requestPermission = async () => {
+    try {
+      const permission = await Notification.requestPermission()
+      setPermissionStatus(permission)
+      
+      if (permission === "granted") {
+        toast({
+          title: "Notifications enabled",
+          description: "You will now receive notifications at your scheduled times.",
+        })
+      }
+    } catch (error) {
+      console.error("Error requesting notification permission:", error)
+      toast({
+        title: "Error enabling notifications",
+        description: "Please try again or check your browser settings.",
+        variant: "destructive",
+      })
+    }
+  }
 
   const loadSettings = async () => {
     try {
@@ -45,13 +77,18 @@ export function NotificationSettings() {
         .eq("user_id", user.id)
         .single()
 
-      if (error && error.code !== "PGRST116") throw error
+      if (error) throw error
 
       if (data?.notification_settings) {
         setSettings(data.notification_settings)
       }
     } catch (error) {
-      console.error("Error loading settings:", error)
+      console.error("Error loading notification settings:", error)
+      toast({
+        title: "Error loading settings",
+        description: "Failed to load your notification settings. Please try again.",
+        variant: "destructive",
+      })
     } finally {
       setIsLoading(false)
     }
@@ -62,49 +99,52 @@ export function NotificationSettings() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      if (settings.enabled) {
-        const permission = await requestNotificationPermission()
-        if (!permission) {
-          toast({
-            title: "Notification Permission Required",
-            description: "Please enable notifications in your browser settings.",
-            variant: "destructive",
-          })
-          return
-        }
-      }
-
-      // First try to get existing settings
-      const { data: existingSettings } = await supabase
-        .from("user_settings")
-        .select("id")
-        .eq("user_id", user.id)
-        .single()
-
       const { error } = await supabase
         .from("user_settings")
-        .upsert({
-          id: existingSettings?.id, // Include the id if it exists
-          user_id: user.id,
-          notification_settings: settings,
-        }, {
-          onConflict: "user_id"
-        })
+        .upsert(
+          {
+            user_id: user.id,
+            notification_settings: settings,
+          },
+          {
+            onConflict: 'user_id',
+            ignoreDuplicates: false
+          }
+        )
 
       if (error) throw error
 
+      // Save to local storage for the notification worker
+      localStorage.setItem("notification_settings", JSON.stringify(settings))
+      // Dispatch storage event to trigger notification worker update
+      window.dispatchEvent(new StorageEvent("storage", {
+        key: "notification_settings",
+        newValue: JSON.stringify(settings)
+      }))
+
       toast({
         title: "Settings saved",
-        description: "Your notification preferences have been updated.",
+        description: "Your notification settings have been updated.",
       })
     } catch (error) {
-      console.error("Error saving settings:", error)
+      console.error("Error saving notification settings:", error)
       toast({
-        title: "Error",
-        description: "Failed to save settings. Please try again.",
+        title: "Error saving settings",
+        description: "Failed to save your notification settings. Please try again.",
         variant: "destructive",
       })
     }
+  }
+
+  const handleToggle = async (checked: boolean) => {
+    if (checked && permissionStatus !== "granted") {
+      await requestPermission()
+      if (permissionStatus !== "granted") {
+        return
+      }
+    }
+    
+    setSettings(prev => ({ ...prev, enabled: checked }))
   }
 
   if (isLoading) {
@@ -112,26 +152,29 @@ export function NotificationSettings() {
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Notification Settings</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="notifications"
-            checked={settings.enabled}
-            onCheckedChange={(checked) =>
-              setSettings((prev) => ({ ...prev, enabled: checked }))
-            }
-          />
-          <Label htmlFor="notifications">Enable Daily Notifications</Label>
-        </div>
+    <div className="space-y-6">
+      {permissionStatus === "denied" && (
+        <Alert variant="destructive">
+          <AlertDescription>
+            Notifications are blocked. Please enable notifications in your browser settings to receive reminders.
+          </AlertDescription>
+        </Alert>
+      )}
 
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label>Morning Notification</Label>
-            <div className="flex space-x-2">
+      <div className="flex items-center space-x-2">
+        <Switch
+          checked={settings.enabled}
+          onCheckedChange={handleToggle}
+          disabled={permissionStatus === "denied"}
+        />
+        <Label>Enable notifications</Label>
+      </div>
+
+      {settings.enabled && (
+        <>
+          <div className="grid gap-4">
+            <div className="space-y-2">
+              <Label>Morning notification time</Label>
               <Input
                 type="time"
                 value={settings.morningTime}
@@ -142,6 +185,10 @@ export function NotificationSettings() {
                   }))
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Morning message</Label>
               <Input
                 value={settings.morningMessage}
                 onChange={(e) =>
@@ -150,14 +197,11 @@ export function NotificationSettings() {
                     morningMessage: e.target.value,
                   }))
                 }
-                placeholder="Morning message"
               />
             </div>
-          </div>
 
-          <div className="space-y-2">
-            <Label>Evening Notification</Label>
-            <div className="flex space-x-2">
+            <div className="space-y-2">
+              <Label>Evening notification time</Label>
               <Input
                 type="time"
                 value={settings.eveningTime}
@@ -168,6 +212,10 @@ export function NotificationSettings() {
                   }))
                 }
               />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Evening message</Label>
               <Input
                 value={settings.eveningMessage}
                 onChange={(e) =>
@@ -176,14 +224,13 @@ export function NotificationSettings() {
                     eveningMessage: e.target.value,
                   }))
                 }
-                placeholder="Evening message"
               />
             </div>
           </div>
-        </div>
 
-        <Button onClick={saveSettings}>Save Settings</Button>
-      </CardContent>
-    </Card>
+          <Button onClick={saveSettings}>Save Settings</Button>
+        </>
+      )}
+    </div>
   )
 }

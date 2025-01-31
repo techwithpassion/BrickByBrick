@@ -43,6 +43,7 @@ import {
 } from "date-fns"
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { requestNotificationPermission, scheduleTaskReminder } from "@/lib/notifications"
+import { rescheduleOverdueTasks } from "@/lib/task-scheduler"
 
 interface Task {
   id: string
@@ -113,48 +114,88 @@ export default function CalendarPage() {
     requestNotificationPermission()
   }, [])
 
-  useEffect(() => {
-    const fetchTasks = async () => {
+  const fetchTasks = async () => {
+    try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      // Get tasks for the visible calendar range (including prev/next month overflow)
-      const visibleStart = startOfWeek(startOfMonth(currentMonth))
-      const visibleEnd = endOfWeek(endOfMonth(currentMonth))
+      const startDate = startOfMonth(currentMonth)
+      const endDate = endOfMonth(currentMonth)
 
       const { data, error } = await supabase
         .from("tasks")
         .select("*")
         .eq("user_id", user.id)
-        .gte("due_date", format(visibleStart, "yyyy-MM-dd"))
-        .lte("due_date", format(visibleEnd, "yyyy-MM-dd"))
-        .order("due_date", { ascending: true })
+        .gte("due_date", startDate.toISOString())
+        .lte("due_date", endDate.toISOString())
 
-      if (error) throw error
+      if (error) {
+        console.error("Error fetching tasks:", error)
+        return
+      }
+
       setTasks(data || [])
-
-      // Schedule reminders for upcoming tasks
-      data?.forEach(task => {
-        if (!task.completed) {
-          scheduleTaskReminder(task)
-        }
-      })
+    } catch (error) {
+      console.error("Error fetching tasks:", error)
     }
+  }
 
+  const fetchHolidays = async () => {
+    try {
+      const startDate = startOfMonth(currentMonth)
+      const endDate = endOfMonth(currentMonth)
+
+      const { data, error } = await supabase
+        .from("holidays")
+        .select("*")
+        .gte("date", startDate.toISOString())
+        .lte("date", endDate.toISOString())
+
+      if (error) {
+        console.error("Error fetching holidays:", error)
+        return
+      }
+
+      setHolidays(data || [])
+    } catch (error) {
+      console.error("Error fetching holidays:", error)
+    }
+  }
+
+  useEffect(() => {
     fetchTasks()
+    fetchHolidays()
+  }, [currentMonth])
 
-    // Subscribe to tasks changes
-    const channel = supabase
-      .channel('tasks_changes')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'tasks' }, () => {
-        fetchTasks()
-      })
-      .subscribe()
+  useEffect(() => {
+    // Reschedule overdue tasks when the calendar is loaded
+    const handleOverdueTasks = async () => {
+      try {
+        const result = await rescheduleOverdueTasks()
+        if (!result) return
 
-    return () => {
-      channel.unsubscribe()
+        if (result.success && result.updatedTasks && result.updatedTasks.length > 0) {
+          toast({
+            title: "Tasks Rescheduled",
+            description: `${result.updatedTasks.length} overdue tasks have been automatically rescheduled.`,
+          })
+          // Refresh tasks after rescheduling
+          fetchTasks()
+        } else if (!result.success) {
+          console.error("Failed to reschedule tasks:", result.error)
+          toast({
+            title: "Error",
+            description: "Failed to reschedule overdue tasks. Please try again.",
+            variant: "destructive",
+          })
+        }
+      } catch (error) {
+        console.error("Error in handleOverdueTasks:", error)
+      }
     }
-  }, [supabase, currentMonth])
+
+    handleOverdueTasks()
+  }, []) // Run once when component mounts
 
   const toggleTaskSelection = (taskId: string) => {
     setSelectedTasks((prev) =>
@@ -180,7 +221,7 @@ export default function CalendarPage() {
 
       setSelectedTasks([])
       setIsDeleteMode(false)
-      loadTasks()
+      fetchTasks()
     } catch (error) {
       console.error("Error deleting tasks:", error)
       toast({
@@ -192,8 +233,8 @@ export default function CalendarPage() {
   }
 
   useEffect(() => {
-    loadTasks()
-    loadHolidays()
+    fetchTasks()
+    fetchHolidays()
     loadTestDays()
   }, [currentMonth])
 
@@ -291,7 +332,7 @@ export default function CalendarPage() {
 
       form.reset()
       setIsAddingTask(false)
-      loadTasks()
+      fetchTasks()
     } catch (error) {
       console.error("Error adding task:", error)
       toast({
@@ -367,6 +408,31 @@ export default function CalendarPage() {
   const isCurrentMonth = (date: Date) =>
     date.getMonth() === currentMonth.getMonth()
 
+  const handleRescheduleOverdueTasks = async () => {
+    try {
+      const result = await rescheduleOverdueTasks()
+      if (!result) return
+
+      if (result.success && result.updatedTasks && result.updatedTasks.length > 0) {
+        toast({
+          title: "Tasks Rescheduled",
+          description: `${result.updatedTasks.length} overdue tasks have been automatically rescheduled.`,
+        })
+        // Refresh tasks after rescheduling
+        fetchTasks()
+      } else if (!result.success) {
+        console.error("Failed to reschedule tasks:", result.error)
+        toast({
+          title: "Error",
+          description: "Failed to reschedule overdue tasks. Please try again.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Error in handleOverdueTasks:", error)
+    }
+  }
+
   return (
     <div className="h-full">
       <div className="flex h-full flex-col lg:flex-row">
@@ -440,7 +506,7 @@ export default function CalendarPage() {
                                     .delete()
                                     .eq("id", task.id)
                                     .then(({ error }) => {
-                                      if (!error) loadTasks()
+                                      if (!error) fetchTasks()
                                     })
                                 }}
                               >
@@ -469,7 +535,7 @@ export default function CalendarPage() {
                                     .update({ completed: !task.completed })
                                     .eq("id", task.id)
                                     .then(({ error }) => {
-                                      if (!error) loadTasks()
+                                      if (!error) fetchTasks()
                                     })
                                 }}
                               >
@@ -546,6 +612,13 @@ export default function CalendarPage() {
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
+              <Button 
+                variant="outline"
+                onClick={handleRescheduleOverdueTasks}
+                className="ml-4"
+              >
+                Reschedule Overdue Tasks
+              </Button>
             </div>
             <Dialog open={isAddingTask} onOpenChange={setIsAddingTask}>
               <DialogTrigger asChild>

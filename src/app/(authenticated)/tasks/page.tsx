@@ -103,179 +103,125 @@ export default function TasksPage() {
           ? new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
           : new Date(b.due_date).getTime() - new Date(a.due_date).getTime()
       }
-      if (sortField === "completed") {
-        return sortOrder === "asc"
-          ? Number(a.completed) - Number(b.completed)
-          : Number(b.completed) - Number(a.completed)
-      }
-      return 0
+      return sortOrder === "asc"
+        ? Number(a.completed) - Number(b.completed)
+        : Number(b.completed) - Number(a.completed)
     })
   }
 
-  const filterTasks = (tasksToFilter: Task[]) => {
-    if (filterStatus === "all") return tasksToFilter
-    return tasksToFilter.filter(task => 
-      filterStatus === "completed" ? task.completed : !task.completed
-    )
-  }
-
-  const displayedTasks = sortTasks(filterTasks(tasks))
+  const filteredAndSortedTasks = sortTasks(
+    tasks.filter((task) => {
+      if (filterStatus === "completed") return task.completed
+      if (filterStatus === "pending") return !task.completed
+      return true
+    })
+  )
 
   return (
-    <div className="container mx-auto py-10">
-      <Card className="p-6">
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">All Tasks</h1>
-          <div className="flex space-x-4">
-            <Select
-              value={filterStatus}
-              onValueChange={(value: "all" | "completed" | "pending") => 
-                setFilterStatus(value)
-              }
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Filter by status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Tasks</SelectItem>
-                <SelectItem value="completed">Completed</SelectItem>
-                <SelectItem value="pending">Pending</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+    <div className="container mx-auto p-4 space-y-4">
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <h1 className="text-2xl font-bold">Tasks</h1>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Select value={filterStatus} onValueChange={(value: any) => setFilterStatus(value)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Tasks</SelectItem>
+              <SelectItem value="completed">Completed</SelectItem>
+              <SelectItem value="pending">Pending</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortField} onValueChange={(value: any) => setSortField(value)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="title">Title</SelectItem>
+              <SelectItem value="due_date">Due Date</SelectItem>
+              <SelectItem value="completed">Status</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => setSortOrder(sortOrder === "asc" ? "desc" : "asc")}
+            className="w-full sm:w-10"
+          >
+            <ArrowUpDown className={`h-4 w-4 ${sortOrder === "desc" ? "transform rotate-180" : ""}`} />
+          </Button>
         </div>
+      </div>
 
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (sortField === "title") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    } else {
-                      setSortField("title")
-                      setSortOrder("asc")
-                    }
-                  }}
-                >
-                  Title
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (sortField === "due_date") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    } else {
-                      setSortField("due_date")
-                      setSortOrder("asc")
-                    }
-                  }}
-                >
-                  Due Date
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    if (sortField === "completed") {
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    } else {
-                      setSortField("completed")
-                      setSortOrder("asc")
-                    }
-                  }}
-                >
-                  Status
-                  <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-              </TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {displayedTasks.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>{task.description}</TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <Calendar className="mr-2 h-4 w-4" />
+      <div className="grid gap-4">
+        {filteredAndSortedTasks.map((task) => (
+          <Card key={task.id} className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              <div className="space-y-2 flex-1">
+                <h3 className="font-semibold">{task.title}</h3>
+                <p className="text-sm text-muted-foreground">{task.description}</p>
+                <div className="flex flex-wrap gap-2 text-sm text-muted-foreground">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
                     {format(new Date(task.due_date), "PPP")}
-                  </div>
-                  <div className="flex items-center text-sm text-muted-foreground">
-                    <Clock className="mr-2 h-4 w-4" />
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-4 w-4" />
                     {format(new Date(task.due_date), "p")}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  {task.completed ? (
-                    <span className="flex items-center text-green-600">
-                      <Check className="mr-2 h-4 w-4" />
-                      Completed
-                    </span>
-                  ) : isPast(new Date(task.due_date)) ? (
-                    <span className="flex items-center text-red-600">
-                      <X className="mr-2 h-4 w-4" />
-                      Overdue
-                    </span>
-                  ) : (
-                    <span className="flex items-center text-yellow-600">
-                      <Clock className="mr-2 h-4 w-4" />
-                      Pending
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {!task.completed && (
-                    <div className="flex space-x-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleMarkComplete(task.id)}
-                      >
-                        <Check className="mr-2 h-4 w-4" />
-                        Complete
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => {
-                          setSelectedTask(task)
-                          setIsRescheduleOpen(true)
-                        }}
-                      >
-                        <Calendar className="mr-2 h-4 w-4" />
-                        Reschedule
-                      </Button>
-                    </div>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Card>
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-row sm:flex-col gap-2 w-full sm:w-auto">
+                {!task.completed && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="flex-1 sm:flex-none"
+                      onClick={() => {
+                        setSelectedTask(task)
+                        setIsRescheduleOpen(true)
+                      }}
+                    >
+                      Reschedule
+                    </Button>
+                    <Button
+                      variant="default"
+                      size="sm"
+                      className="flex-1 sm:flex-none"
+                      onClick={() => handleMarkComplete(task.id)}
+                    >
+                      <Check className="h-4 w-4" />
+                      <span className="ml-2">Complete</span>
+                    </Button>
+                  </>
+                )}
+                {task.completed && (
+                  <span className="flex items-center text-sm text-green-500">
+                    <Check className="h-4 w-4 mr-1" />
+                    Completed
+                  </span>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+
+        {filteredAndSortedTasks.length === 0 && (
+          <div className="text-center p-8 text-muted-foreground">
+            No tasks found. Create some tasks to get started!
+          </div>
+        )}
+      </div>
 
       <RescheduleDialog
-        task={selectedTask}
         isOpen={isRescheduleOpen}
         onClose={() => {
           setIsRescheduleOpen(false)
           setSelectedTask(null)
         }}
-        onReschedule={() => {
-          fetchTasks()
-          setIsRescheduleOpen(false)
-          setSelectedTask(null)
-        }}
+        task={selectedTask}
+        onReschedule={fetchTasks}
       />
     </div>
   )
